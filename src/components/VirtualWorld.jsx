@@ -788,10 +788,8 @@
 
 
 
-
-
 import { Canvas } from '@react-three/fiber';
-import { KeyboardControls, Sky, Environment, Loader, Text } from '@react-three/drei';
+import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import Ecctrl from 'ecctrl';
 import { Suspense, useState } from 'react';
@@ -799,27 +797,23 @@ import { Perf } from 'r3f-perf';
 import { useAvatarStore } from '../store/avatarStore';
 import AvatarModel from './AvatarModel';
 import DubaiCity from './DubaiCity';
-import MobileControls from './MobileControls';
-import { isMobile } from 'react-device-detect';
 
+// Define controls outside component to prevent recreation
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
   { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
   { name: 'leftward', keys: ['ArrowLeft', 'KeyA'] },
   { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
-  { name: 'jump', keys: ['Space'] },
-  { name: 'run', keys: ['Shift'] }
+  { name: 'jump', keys: ['Space'] }
 ];
 
 export default function VirtualWorld() {
   const [debug, setDebug] = useState(false);
-  const [controls, setControls] = useState({
+  const [movement, setMovement] = useState({
     forward: false,
     backward: false,
     left: false,
-    right: false,
-    jump: false,
-    run: false
+    right: false
   });
   
   const avatar = useAvatarStore(state => state.selectedAvatar);
@@ -834,21 +828,6 @@ export default function VirtualWorld() {
       >
         {debug ? 'Hide Debug' : 'Show Debug'}
       </button>
-
-      {/* Visible Controls */}
-      <div className="control-ui">
-        {isMobile ? (
-          <MobileControls 
-            onMove={(movement) => setControls(prev => ({ ...prev, ...movement }))}
-            onJump={(jumping) => setControls(prev => ({ ...prev, jump: jumping }))}
-            onRun={(running) => setControls(prev => ({ ...prev, run: running }))}
-          />
-        ) : (
-          <div className="desktop-controls-hint">
-            WASD to move | SPACE to jump | SHIFT to run
-          </div>
-        )}
-      </div>
 
       <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
         {debug && <Perf position="top-left" />}
@@ -865,55 +844,28 @@ export default function VirtualWorld() {
           <Physics gravity={[0, -9.8, 0]} debug={debug}>
             <KeyboardControls 
               map={keyboardMap}
-              onChange={(name, pressed) => setControls(prev => ({
+              onChange={(name, pressed) => setMovement(prev => ({
                 ...prev,
                 [name.replace('ward', '')]: pressed
               }))}
-            >      
-
-                  <Ecctrl
-                    // Pass all options as a single object
-                    characterInit={{
-                      // Movement controls
-                      forward: controls.forward,
-                      backward: controls.backward,
-                      left: controls.left,
-                      right: controls.right,
-                      jump: controls.jump,
-                      run: controls.run,
-                      
-                      // Character physics
-                      maxVelLimit: controls.run ? 10 : 5,
-                      jumpVel: 8,
-                      turnSpeed: Math.PI / 1.5,
-                      
-                      // Camera settings
-                      camInitDis: -5,
-                      camMaxDis: -10,
-                      camMinDis: -3,
-                      camFollowMult: 12,
-                      camMode: isMobile ? "firstPerson" : "thirdPerson",
-                      
-                      // Physics tuning
-                      moveImpulseMultiplier: 8,
-                      moveDragFactor: 0.2,
-                      turnDragFactor: 0.1,
-                      sprintMultiplier: 2,
-                      
-                      // Animation mapping
-                      animationSet: {
-                        idle: "Idle",
-                        walk: "Walk",
-                        run: "Run",
-                        jump: "Jump",
-                        jumpIdle: "Jump",
-                        jumpLand: "Jump",
-                        fall: "Fall" // Add if your model has fall animation
-                      }
-                    }}
-                  >
-                    <AvatarModel url={modelUrl} />
-                  </Ecctrl>
+            >
+              <Ecctrl
+                // Movement controls
+                forward={movement.forward}
+                backward={movement.backward}
+                left={movement.left}
+                right={movement.right}
+                
+                // Character settings
+                camInitDis={-5}
+                camMaxDis={-10}
+                camMinDis={-3}
+                camFollowMult={12}
+                maxVelLimit={5}
+                jumpVel={5}
+              >
+                <AvatarModel url={modelUrl} />
+              </Ecctrl>
             </KeyboardControls>
 
             <DubaiCity />
@@ -921,18 +873,11 @@ export default function VirtualWorld() {
         </Suspense>
 
         <Environment preset="sunset" />
-        <Sky sunPosition={[100, 20, 100]} />
       </Canvas>
-      
       <Loader />
     </div>
   );
 }
-
-
-
-
-
 
 
 

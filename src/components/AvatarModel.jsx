@@ -428,90 +428,86 @@
 
 
 
-
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
+// Preload models at module level
+const MODELS = {
+  male: '/models/male-traditional.glb',
+  female: '/models/female-traditional.glb'
+};
+
+// Preload function
+const preloadModels = () => {
+  try {
+    Object.values(MODELS).forEach(url => {
+      useGLTF.preload(url);
+    });
+    console.log('Models preloaded successfully');
+  } catch (error) {
+    console.error('Model preload failed:', error);
+  }
+};
+
+// Execute preload when module loads
+preloadModels();
+
 export default function AvatarModel({ url }) {
   const group = useRef();
   const { scene, animations } = useGLTF(url) || {};
-  const { actions, mixer } = useAnimations(animations || [], group);
+  const { actions } = useAnimations(animations || [], group);
 
-  // Initialize animations with crossfading
   useEffect(() => {
-    if (!actions || !mixer) return;
+    if (!actions) return;
     
-    // Set all animations to loop
-    Object.values(actions).forEach(action => {
-      if (action) {
-        action.setLoop(THREE.LoopRepeat, Infinity);
-        action.clampWhenFinished = true;
+    // Initialize animations
+    const initAnimation = (name) => {
+      if (actions[name]) {
+        actions[name].play();
+        if (name !== 'Idle') actions[name].paused = true;
       }
-    });
-
-    // Start with idle animation
-    actions?.Idle?.play();
-    actions?.Idle?.fadeIn(0.5);
+    };
+    
+    initAnimation('Idle');
+    initAnimation('Walk');
+    initAnimation('Run');
+    initAnimation('Jump');
 
     return () => {
       // Cleanup animations
       Object.values(actions).forEach(action => {
-        if (action?.isRunning()) action.fadeOut(0.5);
+        if (action?.isRunning()) action.stop();
       });
     };
-  }, [actions, mixer]);
+  }, [actions]);
 
-  // Animation control
   useFrame(() => {
     if (!group.current?.parent?.userData) return;
     
-    const { 
-      velocity = new THREE.Vector3(), 
-      isRunning = false, 
-      isJumping = false 
-    } = group.current.parent.userData;
-    
+    const { velocity = new THREE.Vector3() } = group.current.parent.userData;
     const isMoving = Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1;
-    const speed = velocity.length();
 
-    // Animation blending
-    if (actions) {
-      // Crossfade between animations
-      if (isJumping) {
-        actions.Jump?.fadeIn(0.2);
-        actions.Walk?.fadeOut(0.1);
-        actions.Run?.fadeOut(0.1);
-        actions.Idle?.fadeOut(0.1);
-      } 
-      else if (isMoving && isRunning) {
-        actions.Run?.fadeIn(0.2);
-        actions.Walk?.fadeOut(0.1);
-        actions.Idle?.fadeOut(0.1);
-        actions.Jump?.fadeOut(0.1);
-      }
-      else if (isMoving) {
-        actions.Walk?.fadeIn(0.2);
-        actions.Run?.fadeOut(0.1);
-        actions.Idle?.fadeOut(0.1);
-        actions.Jump?.fadeOut(0.1);
-      }
-      else {
-        actions.Idle?.fadeIn(0.2);
-        actions.Walk?.fadeOut(0.1);
-        actions.Run?.fadeOut(0.1);
-        actions.Jump?.fadeOut(0.1);
-      }
+    // Rotate model to face movement direction
+    if (isMoving) {
+      const direction = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
+      group.current.lookAt(
+        group.current.position.x + direction.x,
+        group.current.position.y,
+        group.current.position.z + direction.z
+      );
+    }
 
-      // Adjust animation speed based on movement speed
-      if (actions.Walk) actions.Walk.timeScale = THREE.MathUtils.clamp(speed / 2, 0.5, 1.5);
-      if (actions.Run) actions.Run.timeScale = THREE.MathUtils.clamp(speed / 5, 0.8, 1.5);
+    // Control animations
+    if (actions?.Walk && actions?.Idle) {
+      actions.Walk.paused = !isMoving;
+      actions.Idle.paused = isMoving;
     }
   });
 
   if (!scene) {
-    console.error('Failed to load model:', url);
+    console.error('Failed to load avatar model:', url);
     return null;
   }
 
@@ -521,7 +517,6 @@ export default function AvatarModel({ url }) {
     </group>
   );
 }
-
 
 
 
