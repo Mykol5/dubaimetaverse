@@ -65,35 +65,65 @@
 
 
 
+// import { useGLTF, useAnimations } from '@react-three/drei';
+// import { useRef, useEffect } from 'react';
+// import { useFrame } from '@react-three/fiber';
+// import * as THREE from 'three';
+
+// export default function AvatarModel({ url }) {
+//   const group = useRef();
+//   const { scene, animations } = useGLTF(url);
+//   const { actions, mixer } = useAnimations(animations, group);
+
+//   // Play all animations on load
+//   useEffect(() => {
+//     if (animations && animations.length) {
+//       animations.forEach((clip) => {
+//         actions[clip.name]?.play();
+//       });
+//     }
+//   }, [actions, animations]);
+
+//   // Rotate model to face forward
+//   useFrame(() => {
+//     if (group.current) {
+//       group.current.rotation.y = Math.PI; // Rotate 180 degrees to face camera
+//     }
+//   });
+
+//   return (
+//     <group ref={group} position={[0, -1, 0]} scale={[0.5, 0.5, 0.5]}>
+//       <primitive object={scene} />
+//     </group>
+//   );
+// }
+
+
+
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
-import * as THREE from 'three';
 
 export default function AvatarModel({ url }) {
   const group = useRef();
-  const { scene, animations } = useGLTF(url);
-  const { actions, mixer } = useAnimations(animations, group);
-
-  // Play all animations on load
+  const { scene, animations, materials } = useGLTF(url, true); // Add draco compression
+  
+  // Debug what's loaded
   useEffect(() => {
-    if (animations && animations.length) {
-      animations.forEach((clip) => {
-        actions[clip.name]?.play();
-      });
-    }
-  }, [actions, animations]);
+    console.log('Model loaded:', {
+      animations: animations?.map(a => a.name),
+      materials: Object.keys(materials || {})
+    });
+  }, [animations, materials]);
 
-  // Rotate model to face forward
-  useFrame(() => {
-    if (group.current) {
-      group.current.rotation.y = Math.PI; // Rotate 180 degrees to face camera
-    }
-  });
-
+  // Scale and position adjustments
   return (
-    <group ref={group} position={[0, -1, 0]} scale={[0.5, 0.5, 0.5]}>
-      <primitive object={scene} />
+    <group ref={group} position={[0, -1, 0]} scale={0.8}>
+      <primitive 
+        object={scene} 
+        onPointerOver={() => document.body.style.cursor = 'pointer'}
+        onPointerOut={() => document.body.style.cursor = 'auto'}
+      />
     </group>
   );
 }

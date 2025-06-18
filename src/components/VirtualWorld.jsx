@@ -307,13 +307,95 @@
 
 
 
+// import { Canvas } from '@react-three/fiber';
+// import { KeyboardControls, Sky, Environment, OrbitControls } from '@react-three/drei';
+// import { Physics } from '@react-three/rapier';
+// import Ecctrl from 'ecctrl';
+// import AvatarModel from './AvatarModel';
+// import { Suspense } from 'react';
+// import { useAvatarStore } from '../store/avatarStore';
+// import { Perf } from 'r3f-perf';
+
+// const keyboardMap = [
+//   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
+//   { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
+//   { name: 'leftward', keys: ['ArrowLeft', 'KeyA'] },
+//   { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
+//   { name: 'jump', keys: ['Space'] },
+//   { name: 'run', keys: ['Shift'] },
+// ];
+
+// export default function VirtualWorld() {
+//   const avatar = useAvatarStore((s) => s.selectedAvatar);
+//   const outfit = useAvatarStore((s) => s.selectedOutfit);
+
+//   const modelUrl = `/models/${avatar}-${outfit.toLowerCase().replace(' ', '-')}.glb`;
+
+//   return (
+//     <div className="h-screen w-full relative">
+//       {/* Controls Info */}
+//       <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-xl shadow text-sm z-10">
+//         <p>🕹 <strong>WASD</strong> to move</p>
+//         <p>🖱 <strong>Mouse</strong> to look</p>
+//         <p>␣ <strong>Space</strong> to jump</p>
+//       </div>
+
+//       <Canvas shadows camera={{ position: [0, 5, 10], fov: 50 }}>
+//         <Perf position="top-left" />
+//         <ambientLight intensity={0.5} />
+//         <directionalLight
+//           position={[10, 10, 5]}
+//           intensity={1}
+//           castShadow
+//           shadow-mapSize-width={1024}
+//           shadow-mapSize-height={1024}
+//         />
+//         <Sky sunPosition={[100, 20, 100]} />
+
+//         <Suspense fallback={null}>
+//           <Physics gravity={[0, -9.8, 0]}>
+//             <KeyboardControls map={keyboardMap}>
+//               <Ecctrl
+//                 camInitDis={-5}
+//                 camMaxDis={-10}
+//                 camMinDis={-2}
+//                 camFollowMult={10}
+//               >
+//                 <AvatarModel url={modelUrl} />
+//               </Ecctrl>
+//             </KeyboardControls>
+
+//             {/* Ground */}
+//             <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
+//               <planeGeometry args={[100, 100]} />
+//               <meshStandardMaterial color="#f0f0f0" />
+//             </mesh>
+
+//             {/* Dubai Buildings */}
+//             <mesh position={[0, 0, -20]} castShadow>
+//               <boxGeometry args={[10, 20, 5]} />
+//               <meshStandardMaterial color="#a0a0a0" />
+//             </mesh>
+//           </Physics>
+//         </Suspense>
+
+//         <Environment preset="city" />
+//       </Canvas>
+//     </div>
+//   );
+// }
+
+
+
+
+
 import { Canvas } from '@react-three/fiber';
-import { KeyboardControls, Sky, Environment, OrbitControls } from '@react-three/drei';
+import { KeyboardControls, Sky, Environment, OrbitControls, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
-import Ecctrl from 'ecctrl';
+import Ecctrl, { EcctrlAnimation } from 'ecctrl';
 import AvatarModel from './AvatarModel';
-import { Suspense } from 'react';
-import { useAvatarStore } from '../store/avatarStore';
+import DubaiCity from './DubaiCity';
+import { Suspense, useState } from 'react';
 import { Perf } from 'r3f-perf';
 
 const keyboardMap = [
@@ -323,64 +405,61 @@ const keyboardMap = [
   { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
   { name: 'jump', keys: ['Space'] },
   { name: 'run', keys: ['Shift'] },
+  { name: 'action', keys: ['KeyE'] }
 ];
 
 export default function VirtualWorld() {
-  const avatar = useAvatarStore((s) => s.selectedAvatar);
-  const outfit = useAvatarStore((s) => s.selectedOutfit);
-
-  const modelUrl = `/models/${avatar}-${outfit.toLowerCase().replace(' ', '-')}.glb`;
-
+  const [debug, setDebug] = useState(false);
+  
   return (
     <div className="h-screen w-full relative">
-      {/* Controls Info */}
-      <div className="absolute top-4 left-4 bg-black bg-opacity-70 text-white px-4 py-2 rounded-xl shadow text-sm z-10">
-        <p>🕹 <strong>WASD</strong> to move</p>
-        <p>🖱 <strong>Mouse</strong> to look</p>
-        <p>␣ <strong>Space</strong> to jump</p>
-      </div>
+      <button 
+        onClick={() => setDebug(!debug)}
+        className="absolute top-4 right-4 bg-black text-white px-3 py-1 rounded z-50"
+      >
+        {debug ? 'Hide Debug' : 'Show Debug'}
+      </button>
 
-      <Canvas shadows camera={{ position: [0, 5, 10], fov: 50 }}>
-        <Perf position="top-left" />
+      <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
+        {debug && <Perf position="top-left" />}
+        
         <ambientLight intensity={0.5} />
         <directionalLight
-          position={[10, 10, 5]}
-          intensity={1}
+          position={[10, 20, 10]}
+          intensity={2}
           castShadow
-          shadow-mapSize-width={1024}
-          shadow-mapSize-height={1024}
+          shadow-mapSize={[2048, 2048]}
+          shadow-camera-far={50}
+          shadow-camera-left={-10}
+          shadow-camera-right={10}
+          shadow-camera-top={10}
+          shadow-camera-bottom={-10}
         />
-        <Sky sunPosition={[100, 20, 100]} />
-
+        
         <Suspense fallback={null}>
-          <Physics gravity={[0, -9.8, 0]}>
+          <Physics gravity={[0, -9.8, 0]} debug={debug}>
             <KeyboardControls map={keyboardMap}>
               <Ecctrl
+                animated
                 camInitDis={-5}
-                camMaxDis={-10}
-                camMinDis={-2}
-                camFollowMult={10}
+                camMaxDis={-15}
+                camMinDis={-3}
+                camFollowMult={15}
+                maxVelLimit={10}
+                jumpVel={8}
               >
-                <AvatarModel url={modelUrl} />
+                <AvatarModel url="/models/male-traditional.glb" />
+                <EcctrlAnimation characterURL="/models/male-traditional.glb" />
               </Ecctrl>
             </KeyboardControls>
 
-            {/* Ground */}
-            <mesh receiveShadow rotation={[-Math.PI / 2, 0, 0]} position={[0, -1, 0]}>
-              <planeGeometry args={[100, 100]} />
-              <meshStandardMaterial color="#f0f0f0" />
-            </mesh>
-
-            {/* Dubai Buildings */}
-            <mesh position={[0, 0, -20]} castShadow>
-              <boxGeometry args={[10, 20, 5]} />
-              <meshStandardMaterial color="#a0a0a0" />
-            </mesh>
+            <DubaiCity />
           </Physics>
         </Suspense>
 
-        <Environment preset="city" />
+        <Environment preset="sunset" background blur={0.5} />
       </Canvas>
+      <Loader />
     </div>
   );
 }
