@@ -130,50 +130,78 @@
 
 
 
+// import { useGLTF, useAnimations } from '@react-three/drei';
+// import { useRef, useEffect } from 'react';
+// import { useFrame } from '@react-three/fiber';
+
+// export default function AvatarModel({ url }) {
+//   const group = useRef();
+//   const { scene, animations } = useGLTF(url);
+//   const { actions, names } = useAnimations(animations, group);
+
+//   // Debug loaded animations
+//   useEffect(() => {
+//     console.log('Available animations:', names);
+//     if (names.includes('Idle')) {
+//       actions.Idle.play();
+//     } else if (names.length > 0) {
+//       actions[names[0]].play();
+//     }
+//   }, [actions, names]);
+
+//   // Movement animations
+//   useFrame(() => {
+//     if (!group.current) return;
+    
+//     // Rotate model to face movement direction
+//     if (group.current.userData.isMoving) {
+//       group.current.rotation.y = Math.PI;
+//     }
+//   });
+
+//   return (
+//     <group 
+//       ref={group} 
+//       position={[0, -1, 0]} 
+//       scale={0.8}
+//       userData={{ isMoving: false }}
+//     >
+//       <primitive object={scene} />
+//     </group>
+//   );
+// }
+
+// // Preload models
+// ['male', 'female'].forEach(gender => {
+//   ['traditional', 'smart-casual', 'thobe'].forEach(outfit => {
+//     useGLTF.preload(`/models/${gender}-${outfit}.glb`);
+//   });
+// });
+
+
+
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
-import { useFrame } from '@react-three/fiber';
 
 export default function AvatarModel({ url }) {
   const group = useRef();
   const { scene, animations } = useGLTF(url);
-  const { actions, names } = useAnimations(animations, group);
+  const { actions } = useAnimations(animations, group);
 
-  // Debug loaded animations
   useEffect(() => {
-    console.log('Available animations:', names);
-    if (names.includes('Idle')) {
-      actions.Idle.play();
-    } else if (names.length > 0) {
-      actions[names[0]].play();
+    // Try to play any available animation
+    if (animations && animations.length) {
+      actions[animations[0].name]?.play();
     }
-  }, [actions, names]);
-
-  // Movement animations
-  useFrame(() => {
-    if (!group.current) return;
-    
-    // Rotate model to face movement direction
-    if (group.current.userData.isMoving) {
-      group.current.rotation.y = Math.PI;
-    }
-  });
+  }, [actions, animations]);
 
   return (
-    <group 
-      ref={group} 
-      position={[0, -1, 0]} 
-      scale={0.8}
-      userData={{ isMoving: false }}
-    >
+    <group ref={group} position={[0, -1, 0]} scale={0.8}>
       <primitive object={scene} />
     </group>
   );
 }
 
-// Preload models
-['male', 'female'].forEach(gender => {
-  ['traditional', 'smart-casual', 'thobe'].forEach(outfit => {
-    useGLTF.preload(`/models/${gender}-${outfit}.glb`);
-  });
-});
+// Only preload the models you actually have
+useGLTF.preload('/models/male-traditional.glb');
+useGLTF.preload('/models/female-traditional.glb');

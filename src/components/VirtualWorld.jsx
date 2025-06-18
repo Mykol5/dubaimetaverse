@@ -465,76 +465,60 @@
 // }
 
 
-
-
 import { Canvas } from '@react-three/fiber';
-import { KeyboardControls, Sky, Environment, Loader, OrbitControls } from '@react-three/drei';
+import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import Ecctrl from 'ecctrl';
 import AvatarModel from './AvatarModel';
 import DubaiCity from './DubaiCity';
 import { Suspense, useState } from 'react';
 import { Perf } from 'r3f-perf';
+import { useAvatarStore } from '../store/avatarStore';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
   { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
   { name: 'leftward', keys: ['ArrowLeft', 'KeyA'] },
   { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
-  { name: 'jump', keys: ['Space'] },
-  { name: 'run', keys: ['Shift'] },
-  { name: 'enter', keys: ['KeyE'] }
+  { name: 'jump', keys: ['Space'] }
 ];
 
 export default function VirtualWorld() {
   const [debug, setDebug] = useState(false);
-  const [cameraMode, setCameraMode] = useState('follow'); // 'follow' or 'free'
+  const avatar = useAvatarStore(state => state.selectedAvatar);
+  
+  // Simple model selection - only use existing files
+  const modelUrl = `/models/${avatar}-traditional.glb`;
 
   return (
     <div className="h-screen w-full relative">
-      {/* Debug Controls */}
-      <div className="absolute top-4 left-4 z-50 flex gap-2">
-        <button 
-          onClick={() => setDebug(!debug)}
-          className="bg-black text-white px-3 py-1 rounded"
-        >
-          {debug ? 'Hide Debug' : 'Show Debug'}
-        </button>
-        <button 
-          onClick={() => setCameraMode(mode => mode === 'follow' ? 'free' : 'follow')}
-          className="bg-blue-600 text-white px-3 py-1 rounded"
-        >
-          Camera: {cameraMode}
-        </button>
-      </div>
+      <button 
+        onClick={() => setDebug(!debug)}
+        className="absolute top-4 right-4 bg-black text-white px-3 py-1 rounded z-50"
+      >
+        {debug ? 'Hide Debug' : 'Show Debug'}
+      </button>
 
-      <Canvas shadows camera={{ position: [0, 5, 10], fov: 60 }}>
+      <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
         {debug && <Perf position="top-left" />}
         
-        <ambientLight intensity={0.7} />
+        <ambientLight intensity={0.5} />
         <directionalLight
           position={[10, 20, 10]}
-          intensity={1.5}
+          intensity={1}
           castShadow
-          shadow-mapSize={[2048, 2048]}
-          shadow-normalBias={0.05}
+          shadow-mapSize={[1024, 1024]}
         />
         
         <Suspense fallback={null}>
           <Physics gravity={[0, -9.8, 0]} debug={debug}>
             <KeyboardControls map={keyboardMap}>
               <Ecctrl
-                camMode={cameraMode}
-                maxVelLimit={10}
-                jumpVel={7}
-                camInitDis={-8}
-                camMaxDis={-15}
-                camMinDis={-5}
-                camFollowMult={12}
+                camInitDis={-5}
+                camMaxDis={-10}
+                camMinDis={-3}
               >
-                <AvatarModel url={
-                  `/models/${useAvatarStore.getState().selectedAvatar}-${useAvatarStore.getState().selectedOutfit.toLowerCase()}.glb`
-                } />
+                <AvatarModel url={modelUrl} />
               </Ecctrl>
             </KeyboardControls>
 
@@ -542,9 +526,7 @@ export default function VirtualWorld() {
           </Physics>
         </Suspense>
 
-        {cameraMode === 'free' && <OrbitControls makeDefault />}
-        <Environment preset="city" />
-        <Sky sunPosition={[100, 20, 100]} />
+        <Environment preset="sunset" />
       </Canvas>
       <Loader />
     </div>
