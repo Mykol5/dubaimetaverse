@@ -180,8 +180,38 @@
 
 
 
+// import { useGLTF, useAnimations } from '@react-three/drei';
+// import { useRef, useEffect } from 'react';
+
+// export default function AvatarModel({ url }) {
+//   const group = useRef();
+//   const { scene, animations } = useGLTF(url);
+//   const { actions } = useAnimations(animations, group);
+
+//   useEffect(() => {
+//     // Try to play any available animation
+//     if (animations && animations.length) {
+//       actions[animations[0].name]?.play();
+//     }
+//   }, [actions, animations]);
+
+//   return (
+//     <group ref={group} position={[0, -1, 0]} scale={0.8}>
+//       <primitive object={scene} />
+//     </group>
+//   );
+// }
+
+// // Only preload the models you actually have
+// useGLTF.preload('/models/male-traditional.glb');
+// useGLTF.preload('/models/female-traditional.glb');
+
+
+
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
+import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 
 export default function AvatarModel({ url }) {
   const group = useRef();
@@ -189,11 +219,38 @@ export default function AvatarModel({ url }) {
   const { actions } = useAnimations(animations, group);
 
   useEffect(() => {
-    // Try to play any available animation
-    if (animations && animations.length) {
-      actions[animations[0].name]?.play();
+    // Initialize animations
+    if (actions?.Walk) {
+      actions.Walk.play().paused = true;
     }
-  }, [actions, animations]);
+    if (actions?.Idle) {
+      actions.Idle.play();
+    }
+  }, [actions]);
+
+  useFrame(() => {
+    if (!group.current) return;
+    
+    // Get movement direction from parent (Ecctrl)
+    const velocity = group.current.parent?.userData?.velocity;
+    const isMoving = velocity && (Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1);
+
+    // Rotate model to face movement direction
+    if (isMoving) {
+      const direction = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
+      group.current.lookAt(
+        group.current.position.x + direction.x,
+        group.current.position.y,
+        group.current.position.z + direction.z
+      );
+    }
+
+    // Control animations
+    if (actions?.Walk && actions?.Idle) {
+      actions.Walk.paused = !isMoving;
+      actions.Idle.paused = isMoving;
+    }
+  });
 
   return (
     <group ref={group} position={[0, -1, 0]} scale={0.8}>
@@ -202,6 +259,6 @@ export default function AvatarModel({ url }) {
   );
 }
 
-// Only preload the models you actually have
+// Preload models
 useGLTF.preload('/models/male-traditional.glb');
 useGLTF.preload('/models/female-traditional.glb');

@@ -465,6 +465,77 @@
 // }
 
 
+// import { Canvas } from '@react-three/fiber';
+// import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
+// import { Physics } from '@react-three/rapier';
+// import Ecctrl from 'ecctrl';
+// import AvatarModel from './AvatarModel';
+// import DubaiCity from './DubaiCity';
+// import { Suspense, useState } from 'react';
+// import { Perf } from 'r3f-perf';
+// import { useAvatarStore } from '../store/avatarStore';
+
+// const keyboardMap = [
+//   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
+//   { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
+//   { name: 'leftward', keys: ['ArrowLeft', 'KeyA'] },
+//   { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
+//   { name: 'jump', keys: ['Space'] }
+// ];
+
+// export default function VirtualWorld() {
+//   const [debug, setDebug] = useState(false);
+//   const avatar = useAvatarStore(state => state.selectedAvatar);
+  
+//   // Simple model selection - only use existing files
+//   const modelUrl = `/models/${avatar}-traditional.glb`;
+
+//   return (
+//     <div className="h-screen w-full relative">
+//       <button 
+//         onClick={() => setDebug(!debug)}
+//         className="absolute top-4 right-4 bg-black text-white px-3 py-1 rounded z-50"
+//       >
+//         {debug ? 'Hide Debug' : 'Show Debug'}
+//       </button>
+
+//       <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
+//         {debug && <Perf position="top-left" />}
+        
+//         <ambientLight intensity={0.5} />
+//         <directionalLight
+//           position={[10, 20, 10]}
+//           intensity={1}
+//           castShadow
+//           shadow-mapSize={[1024, 1024]}
+//         />
+        
+//         <Suspense fallback={null}>
+//           <Physics gravity={[0, -9.8, 0]} debug={debug}>
+//             <KeyboardControls map={keyboardMap}>
+//               <Ecctrl
+//                 camInitDis={-5}
+//                 camMaxDis={-10}
+//                 camMinDis={-3}
+//               >
+//                 <AvatarModel url={modelUrl} />
+//               </Ecctrl>
+//             </KeyboardControls>
+
+//             <DubaiCity />
+//           </Physics>
+//         </Suspense>
+
+//         <Environment preset="sunset" />
+//       </Canvas>
+//       <Loader />
+//     </div>
+//   );
+// }
+
+
+
+
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
@@ -473,6 +544,7 @@ import AvatarModel from './AvatarModel';
 import DubaiCity from './DubaiCity';
 import { Suspense, useState } from 'react';
 import { Perf } from 'r3f-perf';
+import Joystick from './Joystick';
 import { useAvatarStore } from '../store/avatarStore';
 
 const keyboardMap = [
@@ -485,19 +557,36 @@ const keyboardMap = [
 
 export default function VirtualWorld() {
   const [debug, setDebug] = useState(false);
-  const avatar = useAvatarStore(state => state.selectedAvatar);
+  const [controls, setControls] = useState({
+    forward: false,
+    backward: false,
+    left: false,
+    right: false
+  });
   
-  // Simple model selection - only use existing files
+  const avatar = useAvatarStore(state => state.selectedAvatar);
   const modelUrl = `/models/${avatar}-traditional.glb`;
 
   return (
     <div className="h-screen w-full relative">
+      {/* Debug Toggle */}
       <button 
         onClick={() => setDebug(!debug)}
-        className="absolute top-4 right-4 bg-black text-white px-3 py-1 rounded z-50"
+        className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded z-50"
       >
         {debug ? 'Hide Debug' : 'Show Debug'}
       </button>
+
+      {/* Joystick Controller */}
+      <Joystick 
+        onMove={(movement) => setControls(movement)}
+        onStop={() => setControls({
+          forward: false,
+          backward: false,
+          left: false,
+          right: false
+        })}
+      />
 
       <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
         {debug && <Perf position="top-left" />}
@@ -512,11 +601,27 @@ export default function VirtualWorld() {
         
         <Suspense fallback={null}>
           <Physics gravity={[0, -9.8, 0]} debug={debug}>
-            <KeyboardControls map={keyboardMap}>
+            <KeyboardControls 
+              map={keyboardMap}
+              onChange={(name, pressed) => setControls(prev => ({
+                ...prev,
+                [name.replace('ward', '')]: pressed
+              }))}
+            >
               <Ecctrl
+                // Movement controls
+                forward={controls.forward}
+                backward={controls.backward}
+                left={controls.left}
+                right={controls.right}
+                
+                // Character settings
                 camInitDis={-5}
                 camMaxDis={-10}
                 camMinDis={-3}
+                camFollowMult={12}
+                maxVelLimit={5}
+                jumpVel={5}
               >
                 <AvatarModel url={modelUrl} />
               </Ecctrl>
