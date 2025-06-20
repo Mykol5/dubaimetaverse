@@ -82,7 +82,7 @@ canvas {
 }
 
 /* Joystick Container */
-.joystick-container {
+/* .joystick-container {
   position: fixed;
   bottom: 2rem;
   right: 2rem;
@@ -97,10 +97,10 @@ canvas {
   z-index: 100;
   pointer-events: auto;
   user-select: none;
-}
+} */
 
 /* Joystick Handle */
-.joystick-handle {
+/* .joystick-handle {
   width: 4rem;
   height: 4rem;
   border-radius: 50%;
@@ -108,7 +108,7 @@ canvas {
   transition: transform 0.1s ease-out;
   will-change: transform;
   touch-action: none;
-}
+} */
 
 /* Mobile-specific optimizations */
 @media (hover: none) and (pointer: coarse) {
@@ -121,4 +121,43 @@ canvas {
     width: 5rem;
     height: 5rem;
   }
+}
+
+
+
+
+/* Add to your index.css */
+.control-button {
+  position: fixed;
+  padding: 1rem 1.5rem;
+  border-radius: 9999px;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  font-weight: bold;
+  user-select: none;
+  touch-action: none;
+  z-index: 100;
+}
+
+.joystick-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  width: 8rem;
+  height: 8rem;
+  border-radius: 50%;
+  background-color: rgba(0, 0, 0, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  touch-action: none;
+}
+
+.joystick-handle {
+  width: 4rem;
+  height: 4rem;
+  border-radius: 50%;
+  background-color: rgba(255, 255, 255, 0.8);
+  transition: transform 0.1s ease-out;
 }
