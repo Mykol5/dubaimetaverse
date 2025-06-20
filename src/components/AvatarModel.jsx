@@ -265,18 +265,17 @@
 
 
 
-
-
 import { useGLTF, useAnimations } from '@react-three/drei';
 import { useRef, useEffect } from 'react';
 import { useFrame } from '@react-three/fiber';
+import * as THREE from 'three';
 
 export default function AvatarModel({ url }) {
   const group = useRef();
   const { scene, animations } = useGLTF(url);
   const { actions } = useAnimations(animations, group);
 
-  // Animation states
+  // Initialize animations
   useEffect(() => {
     if (actions?.Idle) actions.Idle.play();
     if (actions?.Walk) actions.Walk.play().paused = true;
@@ -291,11 +290,30 @@ export default function AvatarModel({ url }) {
     const { velocity, isRunning, isJumping } = group.current.parent.userData;
     const isMoving = Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1;
 
+    // Rotate model to face movement direction
+    if (isMoving) {
+      const direction = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
+      group.current.lookAt(
+        group.current.position.x + direction.x,
+        group.current.position.y,
+        group.current.position.z + direction.z
+      );
+    }
+
+    // Control animations
     if (actions?.Jump) actions.Jump.paused = !isJumping;
     if (actions?.Run) actions.Run.paused = !(isMoving && isRunning);
     if (actions?.Walk) actions.Walk.paused = !(isMoving && !isRunning);
     if (actions?.Idle) actions.Idle.paused = isMoving || isJumping;
   });
 
-  return <primitive object={scene} ref={group} />;
+  return (
+    <group ref={group} position={[0, -1, 0]} scale={0.8}>
+      <primitive object={scene} />
+    </group>
+  );
 }
+
+// Preload models
+useGLTF.preload('/models/male-traditional.glb');
+useGLTF.preload('/models/female-traditional.glb');

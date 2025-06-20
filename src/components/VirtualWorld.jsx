@@ -641,97 +641,143 @@
 
 
 
-
-
 import { Canvas } from '@react-three/fiber';
-import { Environment, Sky, PointerLockControls } from '@react-three/drei';
+import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import Ecctrl from 'ecctrl';
-import { useControls } from './Controls';
-import { MobileJoystick } from './MobileJoystick';
-import { useState, useEffect } from 'react';
+import AvatarModel from './AvatarModel';
+import DubaiCity from './DubaiCity';
+import { Suspense, useState, useEffect } from 'react';
+import { Perf } from 'r3f-perf';
+import Joystick from './Joystick';
+import { useAvatarStore } from '../store/avatarStore';
 import { isMobile } from 'react-device-detect';
 
+const keyboardMap = [
+  { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
+  { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
+  { name: 'leftward', keys: ['ArrowLeft', 'KeyA'] },
+  { name: 'rightward', keys: ['ArrowRight', 'KeyD'] },
+  { name: 'jump', keys: ['Space'] },
+  { name: 'run', keys: ['Shift'] }
+];
+
 export default function VirtualWorld() {
-  const controls = useControls();
-  const [mobileControls, setMobileControls] = useState({
+  const [debug, setDebug] = useState(false);
+  const [controls, setControls] = useState({
     forward: false,
     backward: false,
     left: false,
-    right: false
+    right: false,
+    jump: false,
+    run: false
   });
+  
+  const avatar = useAvatarStore(state => state.selectedAvatar);
+  const modelUrl = `/models/${avatar}-traditional.glb`;
 
-  // Combine keyboard and mobile controls
-  const movement = isMobile ? mobileControls : controls;
+  // Mobile controls handler
+  const handleMobileMove = (movement) => {
+    setControls(prev => ({
+      ...prev,
+      ...movement
+    }));
+  };
 
   return (
     <div className="h-screen w-full relative">
+      {/* Debug Toggle */}
+      <button 
+        onClick={() => setDebug(!debug)}
+        className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded z-50"
+      >
+        {debug ? 'Hide Debug' : 'Show Debug'}
+      </button>
+
       {/* Mobile Controls */}
       {isMobile && (
-        <div className="fixed inset-0 touch-none">
-          <MobileJoystick onMove={setMobileControls} />
+        <>
+          <Joystick 
+            onMove={(movement) => handleMobileMove(movement)}
+            onStop={() => handleMobileMove({
+              forward: false,
+              backward: false,
+              left: false,
+              right: false
+            })}
+          />
           
-          {/* Jump button */}
-          <button 
-            className="absolute bottom-8 left-8 px-6 py-4 bg-blue-500 rounded-full text-white"
-            onTouchStart={() => setMobileControls(p => ({ ...p, jump: true }))}
-            onTouchEnd={() => setMobileControls(p => ({ ...p, jump: false }))}
-          >
-            Jump
-          </button>
-          
-          {/* Run button */}
-          <button 
-            className="absolute bottom-24 left-8 px-6 py-4 bg-red-500 rounded-full text-white"
-            onTouchStart={() => setMobileControls(p => ({ ...p, run: true }))}
-            onTouchEnd={() => setMobileControls(p => ({ ...p, run: false }))}
-          >
-            Run
-          </button>
-        </div>
+          {/* Mobile Action Buttons */}
+          <div className="absolute bottom-4 left-4 flex gap-4 z-50">
+            <button
+              className="px-6 py-4 bg-blue-500 rounded-full text-white"
+              onTouchStart={() => setControls(p => ({ ...p, jump: true }))}
+              onTouchEnd={() => setControls(p => ({ ...p, jump: false }))}
+            >
+              Jump
+            </button>
+            <button
+              className="px-6 py-4 bg-red-500 rounded-full text-white"
+              onTouchStart={() => setControls(p => ({ ...p, run: true }))}
+              onTouchEnd={() => setControls(p => ({ ...p, run: false }))}
+            >
+              Run
+            </button>
+          </div>
+        </>
       )}
 
-      <Canvas shadows camera={{ fov: 75 }}>
+      <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
+        {debug && <Perf position="top-left" />}
+        
         <ambientLight intensity={0.5} />
         <directionalLight
           position={[10, 20, 10]}
-          intensity={1.5}
+          intensity={1}
           castShadow
-          shadow-mapSize={[2048, 2048]}
+          shadow-mapSize={[1024, 1024]}
         />
         
-        <Physics gravity={[0, -9.8, 0]}>
-          <Ecctrl
-            // Movement controls
-            forward={movement.forward}
-            backward={movement.backward}
-            left={movement.left}
-            right={movement.right}
-            jump={movement.jump}
-            run={movement.run}
-            
-            // Camera settings
-            camMode={isMobile ? "firstPerson" : "thirdPerson"}
-            camInitDis={-5}
-            camMaxDis={-10}
-            camMinDis={-3}
-            camFollowMult={10}
-            
-            // Character physics
-            maxVelLimit={movement.run ? 10 : 5}
-            jumpVel={5}
-            turnSpeed={Math.PI / 2}
-          >
-            <AvatarModel url="/models/female-traditional.glb" />
-          </Ecctrl>
+        <Suspense fallback={null}>
+          <Physics gravity={[0, -9.8, 0]} debug={debug}>
+            <KeyboardControls 
+              map={keyboardMap}
+              onChange={(name, pressed) => setControls(prev => ({
+                ...prev,
+                [name.replace('ward', '')]: pressed
+              }))}
+            >
+              <Ecctrl
+                // Movement controls
+                forward={controls.forward}
+                backward={controls.backward}
+                left={controls.left}
+                right={controls.right}
+                jump={controls.jump}
+                run={controls.run}
+                
+                // Character settings
+                camInitDis={-5}
+                camMaxDis={-10}
+                camMinDis={-3}
+                camFollowMult={12}
+                maxVelLimit={controls.run ? 8 : 5}
+                jumpVel={6}
+                turnSpeed={Math.PI / 2}
+                camMode={isMobile ? "firstPerson" : "thirdPerson"}
+              >
+                <AvatarModel url={modelUrl} />
+              </Ecctrl>
+            </KeyboardControls>
 
-          <DubaiCity />
-        </Physics>
+            <DubaiCity />
+          </Physics>
+        </Suspense>
 
-        {!isMobile && <PointerLockControls />}
-        <Environment preset="city" />
+        <Environment preset="sunset" />
         <Sky sunPosition={[100, 20, 100]} />
       </Canvas>
+      <Loader />
     </div>
   );
 }
