@@ -394,7 +394,7 @@ export default function AvatarModel({ url }) {
 
 // Preload models with error handling
 try {
-  useGLTF.preload('/models/male-traditional.glb');
+  useGLTF.preload('/models/female-traditional.glb');
   useGLTF.preload('/models/female-traditional.glb');
 } catch (error) {
   console.error('Model preload failed:', error);
