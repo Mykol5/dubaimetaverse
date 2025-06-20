@@ -640,18 +640,18 @@
 
 
 
-
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import Ecctrl from 'ecctrl';
-import AvatarModel from './AvatarModel';
-import DubaiCity from './DubaiCity';
 import { Suspense, useState, useEffect } from 'react';
 import { Perf } from 'r3f-perf';
-import Joystick from './Joystick';
-import { useAvatarStore } from '../store/avatarStore';
+import { ErrorBoundary } from 'react-error-boundary';
 import { isMobile } from 'react-device-detect';
+import { useAvatarStore } from '../store/avatarStore';
+import AvatarModel from './AvatarModel';
+import DubaiCity from './DubaiCity';
+import Joystick from './Joystick';
 
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
@@ -661,6 +661,23 @@ const keyboardMap = [
   { name: 'jump', keys: ['Space'] },
   { name: 'run', keys: ['Shift'] }
 ];
+
+function FallbackComponent({ error }) {
+  return (
+    <div className="fixed inset-0 bg-black text-white p-8 flex items-center justify-center">
+      <div className="text-center">
+        <h2 className="text-2xl font-bold mb-4">3D View Error</h2>
+        <p className="mb-4">Something went wrong with the 3D environment</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-4 py-2 bg-white text-black rounded"
+        >
+          Reload
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function VirtualWorld() {
   const [debug, setDebug] = useState(false);
@@ -676,12 +693,8 @@ export default function VirtualWorld() {
   const avatar = useAvatarStore(state => state.selectedAvatar);
   const modelUrl = `/models/${avatar}-traditional.glb`;
 
-  // Mobile controls handler
   const handleMobileMove = (movement) => {
-    setControls(prev => ({
-      ...prev,
-      ...movement
-    }));
+    setControls(prev => ({ ...prev, ...movement }));
   };
 
   return (
@@ -697,17 +710,7 @@ export default function VirtualWorld() {
       {/* Mobile Controls */}
       {isMobile && (
         <>
-          <Joystick 
-            onMove={(movement) => handleMobileMove(movement)}
-            onStop={() => handleMobileMove({
-              forward: false,
-              backward: false,
-              left: false,
-              right: false
-            })}
-          />
-          
-          {/* Mobile Action Buttons */}
+          <Joystick onMove={handleMobileMove} />
           <div className="absolute bottom-4 left-4 flex gap-4 z-50">
             <button
               className="px-6 py-4 bg-blue-500 rounded-full text-white"
@@ -727,56 +730,56 @@ export default function VirtualWorld() {
         </>
       )}
 
-      <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
-        {debug && <Perf position="top-left" />}
-        
-        <ambientLight intensity={0.5} />
-        <directionalLight
-          position={[10, 20, 10]}
-          intensity={1}
-          castShadow
-          shadow-mapSize={[1024, 1024]}
-        />
-        
-        <Suspense fallback={null}>
-          <Physics gravity={[0, -9.8, 0]} debug={debug}>
-            <KeyboardControls 
-              map={keyboardMap}
-              onChange={(name, pressed) => setControls(prev => ({
-                ...prev,
-                [name.replace('ward', '')]: pressed
-              }))}
-            >
-              <Ecctrl
-                // Movement controls
-                forward={controls.forward}
-                backward={controls.backward}
-                left={controls.left}
-                right={controls.right}
-                jump={controls.jump}
-                run={controls.run}
-                
-                // Character settings
-                camInitDis={-5}
-                camMaxDis={-10}
-                camMinDis={-3}
-                camFollowMult={12}
-                maxVelLimit={controls.run ? 8 : 5}
-                jumpVel={6}
-                turnSpeed={Math.PI / 2}
-                camMode={isMobile ? "firstPerson" : "thirdPerson"}
+      <ErrorBoundary FallbackComponent={FallbackComponent}>
+        <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
+          {debug && <Perf position="top-left" />}
+          
+          <ambientLight intensity={0.5} />
+          <directionalLight
+            position={[10, 20, 10]}
+            intensity={1}
+            castShadow
+            shadow-mapSize={[1024, 1024]}
+          />
+          
+          <Suspense fallback={null}>
+            <Physics gravity={[0, -9.8, 0]} debug={debug}>
+              <KeyboardControls 
+                map={keyboardMap}
+                onChange={(name, pressed) => setControls(prev => ({
+                  ...prev,
+                  [name.replace('ward', '')]: pressed
+                }))}
               >
-                <AvatarModel url={modelUrl} />
-              </Ecctrl>
-            </KeyboardControls>
+                <Ecctrl
+                  forward={controls.forward}
+                  backward={controls.backward}
+                  left={controls.left}
+                  right={controls.right}
+                  jump={controls.jump}
+                  run={controls.run}
+                  camInitDis={-5}
+                  camMaxDis={-10}
+                  camMinDis={-3}
+                  camFollowMult={12}
+                  maxVelLimit={controls.run ? 8 : 5}
+                  jumpVel={6}
+                  turnSpeed={Math.PI / 2}
+                  camMode={isMobile ? "firstPerson" : "thirdPerson"}
+                >
+                  <AvatarModel url={modelUrl} />
+                </Ecctrl>
+              </KeyboardControls>
 
-            <DubaiCity />
-          </Physics>
-        </Suspense>
+              <DubaiCity />
+            </Physics>
+          </Suspense>
 
-        <Environment preset="sunset" />
-        <Sky sunPosition={[100, 20, 100]} />
-      </Canvas>
+          <Environment preset="sunset" />
+          <Sky sunPosition={[100, 20, 100]} />
+        </Canvas>
+      </ErrorBoundary>
+      
       <Loader />
     </div>
   );
