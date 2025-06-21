@@ -869,8 +869,57 @@ export default function VirtualWorld() {
                 ...prev,
                 [name.replace('ward', '')]: pressed
               }))}
-            >
-              <Ecctrl
+            >      
+                <Ecctrl
+                  // Movement controls (now using intensity values)
+                  forward={controls.forward}
+                  backward={controls.backward}
+                  left={controls.left}
+                  right={controls.right}
+                  jump={controls.jump}
+                  run={controls.run}
+                  
+                  // Character settings
+                  camInitDis={-5}
+                  camMaxDis={-10}
+                  camMinDis={-3}
+                  camFollowMult={12}
+                  maxVelLimit={controls.run ? 10 : 5} // Faster when running
+                  jumpVel={8}
+                  turnSpeed={Math.PI / 1.5} // Faster turning
+                  camMode={isMobile ? "firstPerson" : "thirdPerson"}
+                  
+                  // New important props for smooth movement:
+                  moveImpulseMultiplier={8}
+                  moveDragFactor={0.2}
+                  turnDragFactor={0.1}
+                  sprintMultiplier={2}
+                >
+                  <AvatarModel url={modelUrl} />
+                </Ecctrl>
+            </KeyboardControls>
+
+            <DubaiCity />
+          </Physics>
+        </Suspense>
+
+        <Environment preset="sunset" />
+        <Sky sunPosition={[100, 20, 100]} />
+      </Canvas>
+      
+      <Loader />
+    </div>
+  );
+}
+
+
+
+
+
+
+
+
+              {/* <Ecctrl
                 forward={controls.forward}
                 backward={controls.backward}
                 left={controls.left}
@@ -888,17 +937,5 @@ export default function VirtualWorld() {
               >
                 <AvatarModel url={modelUrl} />
               </Ecctrl>
-            </KeyboardControls>
-
-            <DubaiCity />
-          </Physics>
-        </Suspense>
-
-        <Environment preset="sunset" />
-        <Sky sunPosition={[100, 20, 100]} />
-      </Canvas>
-      
-      <Loader />
-    </div>
-  );
-}
+               */}
+        

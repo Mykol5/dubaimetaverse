@@ -220,3 +220,30 @@ canvas {
   border-radius: 0.5rem;
   font-size: 0.9rem;
 }
+
+
+/* Add to your index.css */
+.joystick-container:active {
+  background-color: rgba(0, 0, 0, 0.7);
+}
+
+.action-button:active {
+  transform: scale(0.95);
+  opacity: 0.9;
+}
+
+/* Pulse animation for better visual feedback */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+.action-button {
+  transition: all 0.1s ease;
+  animation: pulse 2s infinite;
+}
+
+.action-button:active {
+  animation: none;
+}

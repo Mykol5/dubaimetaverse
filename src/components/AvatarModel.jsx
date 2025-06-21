@@ -353,32 +353,53 @@ export default function AvatarModel({ url }) {
   }, [actions]);
 
   // Safe animation control
+
   useFrame(() => {
     if (!group.current?.parent?.userData) return;
     
-    try {
-      const { velocity = new THREE.Vector3(), isRunning = false, isJumping = false } = group.current.parent.userData;
-      const isMoving = Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1;
+    const { 
+      velocity = new THREE.Vector3(), 
+      isRunning = false, 
+      isJumping = false 
+    } = group.current.parent.userData;
+    
+    const isMoving = Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1;
 
-      // Rotation
-      if (isMoving && velocity) {
-        const direction = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
-        group.current.lookAt(
-          group.current.position.x + direction.x,
-          group.current.position.y,
-          group.current.position.z + direction.z
-        );
-      }
-
-      // Animation states
-      if (actions?.Jump) actions.Jump.paused = !isJumping;
-      if (actions?.Run) actions.Run.paused = !(isMoving && isRunning);
-      if (actions?.Walk) actions.Walk.paused = !(isMoving && !isRunning);
-      if (actions?.Idle) actions.Idle.paused = isMoving || isJumping;
-    } catch (error) {
-      console.error('Animation frame error:', error);
+    // Smooth rotation towards movement direction
+    if (isMoving) {
+      const targetRotation = Math.atan2(-velocity.x, -velocity.z);
+      group.current.rotation.y = THREE.MathUtils.lerp(
+        group.current.rotation.y,
+        targetRotation,
+        0.2 // Rotation speed (0.1 = slow, 0.5 = fast)
+      );
     }
-  });
+
+    // Animation control with better blending
+    if (actions) {
+      const walkIntensity = Math.min(velocity.length() / 5, 1);
+      
+      if (actions.Jump) {
+        actions.Jump.weight = isJumping ? 1 : 0;
+        actions.Jump.paused = !isJumping;
+      }
+      
+      if (actions.Run) {
+        actions.Run.weight = isRunning ? walkIntensity : 0;
+        actions.Run.paused = !(isMoving && isRunning);
+      }
+      
+      if (actions.Walk) {
+        actions.Walk.weight = !isRunning ? walkIntensity : 0;
+        actions.Walk.paused = !(isMoving && !isRunning);
+      }
+      
+      if (actions.Idle) {
+        actions.Idle.weight = isMoving ? 0 : 1;
+        actions.Idle.paused = isMoving;
+      }
+    }
+});
 
   if (!scene) {
     console.error('Failed to load model:', url);
@@ -399,3 +420,33 @@ try {
 } catch (error) {
   console.error('Model preload failed:', error);
 }
+
+
+
+
+  // useFrame(() => {
+  //   if (!group.current?.parent?.userData) return;
+    
+  //   try {
+  //     const { velocity = new THREE.Vector3(), isRunning = false, isJumping = false } = group.current.parent.userData;
+  //     const isMoving = Math.abs(velocity.x) > 0.1 || Math.abs(velocity.z) > 0.1;
+
+  //     // Rotation
+  //     if (isMoving && velocity) {
+  //       const direction = new THREE.Vector3(velocity.x, 0, velocity.z).normalize();
+  //       group.current.lookAt(
+  //         group.current.position.x + direction.x,
+  //         group.current.position.y,
+  //         group.current.position.z + direction.z
+  //       );
+  //     }
+
+  //     // Animation states
+  //     if (actions?.Jump) actions.Jump.paused = !isJumping;
+  //     if (actions?.Run) actions.Run.paused = !(isMoving && isRunning);
+  //     if (actions?.Walk) actions.Walk.paused = !(isMoving && !isRunning);
+  //     if (actions?.Idle) actions.Idle.paused = isMoving || isJumping;
+  //   } catch (error) {
+  //     console.error('Animation frame error:', error);
+  //   }
+  // });
