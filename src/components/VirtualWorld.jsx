@@ -870,33 +870,50 @@ export default function VirtualWorld() {
                 [name.replace('ward', '')]: pressed
               }))}
             >      
-                <Ecctrl
-                  // Movement controls (now using intensity values)
-                  forward={controls.forward}
-                  backward={controls.backward}
-                  left={controls.left}
-                  right={controls.right}
-                  jump={controls.jump}
-                  run={controls.run}
-                  
-                  // Character settings
-                  camInitDis={-5}
-                  camMaxDis={-10}
-                  camMinDis={-3}
-                  camFollowMult={12}
-                  maxVelLimit={controls.run ? 10 : 5} // Faster when running
-                  jumpVel={8}
-                  turnSpeed={Math.PI / 1.5} // Faster turning
-                  camMode={isMobile ? "firstPerson" : "thirdPerson"}
-                  
-                  // New important props for smooth movement:
-                  moveImpulseMultiplier={8}
-                  moveDragFactor={0.2}
-                  turnDragFactor={0.1}
-                  sprintMultiplier={2}
-                >
-                  <AvatarModel url={modelUrl} />
-                </Ecctrl>
+
+                  <Ecctrl
+                    // Pass all options as a single object
+                    characterInit={{
+                      // Movement controls
+                      forward: controls.forward,
+                      backward: controls.backward,
+                      left: controls.left,
+                      right: controls.right,
+                      jump: controls.jump,
+                      run: controls.run,
+                      
+                      // Character physics
+                      maxVelLimit: controls.run ? 10 : 5,
+                      jumpVel: 8,
+                      turnSpeed: Math.PI / 1.5,
+                      
+                      // Camera settings
+                      camInitDis: -5,
+                      camMaxDis: -10,
+                      camMinDis: -3,
+                      camFollowMult: 12,
+                      camMode: isMobile ? "firstPerson" : "thirdPerson",
+                      
+                      // Physics tuning
+                      moveImpulseMultiplier: 8,
+                      moveDragFactor: 0.2,
+                      turnDragFactor: 0.1,
+                      sprintMultiplier: 2,
+                      
+                      // Animation mapping
+                      animationSet: {
+                        idle: "Idle",
+                        walk: "Walk",
+                        run: "Run",
+                        jump: "Jump",
+                        jumpIdle: "Jump",
+                        jumpLand: "Jump",
+                        fall: "Fall" // Add if your model has fall animation
+                      }
+                    }}
+                  >
+                    <AvatarModel url={modelUrl} />
+                  </Ecctrl>
             </KeyboardControls>
 
             <DubaiCity />
@@ -939,3 +956,36 @@ export default function VirtualWorld() {
               </Ecctrl>
                */}
         
+
+
+
+
+                               {/* <Ecctrl
+                  // Movement controls (now using intensity values)
+                  forward={controls.forward}
+                  backward={controls.backward}
+                  left={controls.left}
+                  right={controls.right}
+                  jump={controls.jump}
+                  run={controls.run}
+                  
+                  // Character settings
+                  camInitDis={-5}
+                  camMaxDis={-10}
+                  camMinDis={-3}
+                  camFollowMult={12}
+                  maxVelLimit={controls.run ? 10 : 5} // Faster when running
+                  jumpVel={8}
+                  turnSpeed={Math.PI / 1.5} // Faster turning
+                  camMode={isMobile ? "firstPerson" : "thirdPerson"}
+                  
+                  // New important props for smooth movement:
+                  moveImpulseMultiplier={8}
+                  moveDragFactor={0.2}
+                  turnDragFactor={0.1}
+                  sprintMultiplier={2}
+                >
+                  <AvatarModel url={modelUrl} />
+                </Ecctrl> */}
+
+                // Update the Ecctrl component configuration:

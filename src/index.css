@@ -244,6 +244,39 @@ canvas {
   animation: pulse 2s infinite;
 }
 
-.action-button:active {
+/* .action-button:active {
+  animation: none;
+} */
+
+
+
+/* Add to index.css */
+.joystick-container.active {
+  background-color: rgba(0, 0, 0, 0.7);
+  transform: scale(1.05);
+}
+
+.joystick-handle {
+  transition: transform 0.1s ease-out;
+}
+
+.action-button.pressed {
+  transform: scale(0.95);
+  opacity: 0.9;
+  box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
+}
+
+/* Animation states */
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* .action-button {
+  animation: pulse 1.5s infinite;
+} */
+
+.action-button.pressed {
   animation: none;
 }

@@ -85,13 +85,115 @@
 
 
 
-import { useState } from 'react';
+// import { useState } from 'react';
+
+// export default function MobileControls({ onMove, onJump, onRun }) {
+//   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
+//   const [touchStart, setTouchStart] = useState(null);
+
+//   const handleTouchStart = (e) => {
+//     const touch = e.touches[0];
+//     const joystickArea = e.currentTarget.getBoundingClientRect();
+//     setTouchStart({
+//       x: touch.clientX,
+//       y: touch.clientY,
+//       centerX: joystickArea.left + joystickArea.width / 2,
+//       centerY: joystickArea.top + joystickArea.height / 2
+//     });
+//   };
+
+//   const handleTouchMove = (e) => {
+//     if (!touchStart) return;
+//     const touch = e.touches[0];
+    
+//     // Calculate relative position to joystick center
+//     const deltaX = touch.clientX - touchStart.centerX;
+//     const deltaY = touch.clientY - touchStart.centerY;
+    
+//     // Limit joystick movement to its radius
+//     const distance = Math.min(Math.sqrt(deltaX**2 + deltaY**2), 50);
+//     const angle = Math.atan2(deltaY, deltaX);
+    
+//     const x = Math.cos(angle) * distance;
+//     const y = Math.sin(angle) * distance;
+    
+//     setJoystickPos({ x, y });
+    
+//     // Calculate movement intensity (0 to 1)
+//     const intensity = Math.min(distance / 50, 1);
+    
+//     // Determine movement direction with intensity
+//     onMove({
+//       forward: y < -10 ? intensity : 0,
+//       backward: y > 10 ? intensity : 0,
+//       left: x < -10 ? intensity : 0,
+//       right: x > 10 ? intensity : 0
+//     });
+//   };
+
+//   const handleTouchEnd = () => {
+//     setTouchStart(null);
+//     setJoystickPos({ x: 0, y: 0 });
+//     onMove({
+//       forward: 0,
+//       backward: 0,
+//       left: 0,
+//       right: 0
+//     });
+//   };
+
+//   return (
+//     <>
+//       {/* Joystick */}
+//       <div 
+//         className="joystick-container"
+//         onTouchStart={handleTouchStart}
+//         onTouchMove={handleTouchMove}
+//         onTouchEnd={handleTouchEnd}
+//       >
+//         <div 
+//           className="joystick-handle"
+//           style={{
+//             transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
+//             transition: joystickPos.x === 0 && joystickPos.y === 0 ? 'transform 0.2s' : 'none'
+//           }}
+//         />
+//       </div>
+
+//       {/* Action Buttons */}
+//       <button
+//         className="action-button jump-button"
+//         onTouchStart={() => onJump(true)}
+//         onTouchEnd={() => onJump(false)}
+//       >
+//         JUMP
+//       </button>
+      
+//       <button
+//         className="action-button run-button"
+//         onTouchStart={() => onRun(true)}
+//         onTouchEnd={() => onRun(false)}
+//       >
+//         RUN
+//       </button>
+//     </>
+//   );
+// }
+
+
+
+
+
+
+import { useState, useEffect } from 'react';
 
 export default function MobileControls({ onMove, onJump, onRun }) {
   const [joystickPos, setJoystickPos] = useState({ x: 0, y: 0 });
   const [touchStart, setTouchStart] = useState(null);
+  const [lastMove, setLastMove] = useState(Date.now());
 
   const handleTouchStart = (e) => {
+    e.preventDefault();
     const touch = e.touches[0];
     const joystickArea = e.currentTarget.getBoundingClientRect();
     setTouchStart({
@@ -100,17 +202,17 @@ export default function MobileControls({ onMove, onJump, onRun }) {
       centerX: joystickArea.left + joystickArea.width / 2,
       centerY: joystickArea.top + joystickArea.height / 2
     });
+    setLastMove(Date.now());
   };
 
   const handleTouchMove = (e) => {
     if (!touchStart) return;
+    e.preventDefault();
     const touch = e.touches[0];
     
-    // Calculate relative position to joystick center
     const deltaX = touch.clientX - touchStart.centerX;
     const deltaY = touch.clientY - touchStart.centerY;
     
-    // Limit joystick movement to its radius
     const distance = Math.min(Math.sqrt(deltaX**2 + deltaY**2), 50);
     const angle = Math.atan2(deltaY, deltaX);
     
@@ -118,11 +220,10 @@ export default function MobileControls({ onMove, onJump, onRun }) {
     const y = Math.sin(angle) * distance;
     
     setJoystickPos({ x, y });
+    setLastMove(Date.now());
     
-    // Calculate movement intensity (0 to 1)
     const intensity = Math.min(distance / 50, 1);
     
-    // Determine movement direction with intensity
     onMove({
       forward: y < -10 ? intensity : 0,
       backward: y > 10 ? intensity : 0,
@@ -131,7 +232,8 @@ export default function MobileControls({ onMove, onJump, onRun }) {
     });
   };
 
-  const handleTouchEnd = () => {
+  const handleTouchEnd = (e) => {
+    e.preventDefault();
     setTouchStart(null);
     setJoystickPos({ x: 0, y: 0 });
     onMove({
@@ -142,11 +244,21 @@ export default function MobileControls({ onMove, onJump, onRun }) {
     });
   };
 
+  // Reset controls if no movement for 1 second
+  useEffect(() => {
+    const timer = setInterval(() => {
+      if (Date.now() - lastMove > 1000 && touchStart) {
+        handleTouchEnd({ preventDefault: () => {} });
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lastMove, touchStart]);
+
   return (
     <>
-      {/* Joystick */}
+      {/* Joystick with active state */}
       <div 
-        className="joystick-container"
+        className={`joystick-container ${touchStart ? 'active' : ''}`}
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
@@ -155,24 +267,36 @@ export default function MobileControls({ onMove, onJump, onRun }) {
           className="joystick-handle"
           style={{
             transform: `translate(${joystickPos.x}px, ${joystickPos.y}px)`,
-            transition: joystickPos.x === 0 && joystickPos.y === 0 ? 'transform 0.2s' : 'none'
+            transition: joystickPos.x === 0 && joystickPos.y === 0 ? 'transform 0.15s ease-out' : 'none'
           }}
         />
       </div>
 
-      {/* Action Buttons */}
+      {/* Buttons with press feedback */}
       <button
-        className="action-button jump-button"
-        onTouchStart={() => onJump(true)}
-        onTouchEnd={() => onJump(false)}
+        className={`action-button jump-button ${controls.jump ? 'pressed' : ''}`}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          onJump(true);
+        }}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          onJump(false);
+        }}
       >
         JUMP
       </button>
       
       <button
-        className="action-button run-button"
-        onTouchStart={() => onRun(true)}
-        onTouchEnd={() => onRun(false)}
+        className={`action-button run-button ${controls.run ? 'pressed' : ''}`}
+        onTouchStart={(e) => {
+          e.preventDefault();
+          onRun(true);
+        }}
+        onTouchEnd={(e) => {
+          e.preventDefault();
+          onRun(false);
+        }}
       >
         RUN
       </button>
