@@ -96,7 +96,7 @@
 
 
 
-
+import { useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
 import * as THREE from 'three';
