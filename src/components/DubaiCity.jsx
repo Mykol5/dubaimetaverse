@@ -99,7 +99,7 @@
 import { useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
-import * as THREE from 'three';
+// import * as THREE from 'three';
 import { optimizeTextures } from '../utils/textureOptimizer';
 
 export default function DubaiCity() {

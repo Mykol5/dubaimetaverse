@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useThree } from '@react-three/fiber';
+// import { useThree } from '@react-three/fiber';
 
 export function useControls() {
   const [controls, setControls] = useState({
