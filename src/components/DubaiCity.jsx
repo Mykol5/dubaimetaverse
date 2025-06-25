@@ -96,18 +96,21 @@
 
 
 
-import { useEffect } from 'react';
 import { useGLTF } from '@react-three/drei';
 import { RigidBody } from '@react-three/rapier';
-// import * as THREE from 'three';
+import { useEffect } from 'react';
 import { optimizeTextures } from '../utils/textureOptimizer';
 
 export default function DubaiCity() {
-  const { scene } = useGLTF('/models/dubai-scene.glb') || {};
+  const { scene } = useGLTF('/models/dubai-scene.glb', true) || {};
 
   useEffect(() => {
     if (scene) {
-      optimizeTextures(scene);
+      try {
+        optimizeTextures(scene);
+      } catch (error) {
+        console.error('Texture optimization failed:', error);
+      }
     }
   }, [scene]);
 
@@ -117,10 +120,8 @@ export default function DubaiCity() {
   }
 
   return (
-    <group>
-      <RigidBody type="fixed" colliders="trimesh">
-        <primitive object={scene} />
-      </RigidBody>
-    </group>
+    <RigidBody type="fixed" colliders="trimesh">
+      <primitive object={scene} />
+    </RigidBody>
   );
 }

@@ -849,23 +849,38 @@ export default function VirtualWorld() {
                 [name.replace('ward', '')]: pressed
               }))}
             >
-              <Ecctrl
-                // Movement controls
-                forward={movement.forward}
-                backward={movement.backward}
-                left={movement.left}
-                right={movement.right}
-                
-                // Character settings
-                camInitDis={-5}
-                camMaxDis={-10}
-                camMinDis={-3}
-                camFollowMult={12}
-                maxVelLimit={5}
-                jumpVel={5}
-              >
-                <AvatarModel url={modelUrl} />
-              </Ecctrl>
+          <Ecctrl
+            characterInit={{
+              // Movement controls
+              forward: controls.forward,
+              backward: controls.backward,
+              left: controls.left,
+              right: controls.right,
+              
+              // Physics settings
+              maxVelLimit: 5,
+              jumpVel: 5,
+              turnSpeed: Math.PI / 2,
+              
+              // Camera settings
+              camInitDis: -5,
+              camMaxDis: -10,
+              camMinDis: -3,
+              camFollowMult: 12,
+              
+              // Animation mapping
+              animationSet: {
+                idle: "Idle",
+                walk: "Walk",
+                run: "Run",
+                jump: "Jump",
+                jumpIdle: "Jump",
+                jumpLand: "Jump"
+              }
+            }}
+          >
+            <AvatarModel url={modelUrl} />
+          </Ecctrl>
             </KeyboardControls>
 
             <DubaiCity />

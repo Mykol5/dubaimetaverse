@@ -1,3 +1,6 @@
+
+import * as THREE from 'three'; // Add this at the top
+
 export function optimizeTextures(scene) {
   scene.traverse((child) => {
     if (child.isMesh && child.material) {
