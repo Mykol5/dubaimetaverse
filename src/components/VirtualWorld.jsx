@@ -786,19 +786,17 @@
 // }
 
 
-
-
+import { Suspense, useState } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { KeyboardControls, Sky, Environment, Loader } from '@react-three/drei';
 import { Physics } from '@react-three/rapier';
 import Ecctrl from 'ecctrl';
-import { Suspense, useState } from 'react';
 import { Perf } from 'r3f-perf';
 import { useAvatarStore } from '../store/avatarStore';
 import AvatarModel from './AvatarModel';
 import DubaiCity from './DubaiCity';
+import WebGLContextManager from './WebGLContextManager';
 
-// Define controls outside component to prevent recreation
 const keyboardMap = [
   { name: 'forward', keys: ['ArrowUp', 'KeyW'] },
   { name: 'backward', keys: ['ArrowDown', 'KeyS'] },
@@ -809,19 +807,19 @@ const keyboardMap = [
 
 export default function VirtualWorld() {
   const [debug, setDebug] = useState(false);
-  const [movement, setMovement] = useState({
+  const [controls, setControls] = useState({
     forward: false,
     backward: false,
     left: false,
-    right: false
+    right: false,
+    jump: false
   });
-  
+
   const avatar = useAvatarStore(state => state.selectedAvatar);
   const modelUrl = `/models/${avatar}-traditional.glb`;
 
   return (
     <div className="h-screen w-full relative">
-      {/* Debug Toggle */}
       <button 
         onClick={() => setDebug(!debug)}
         className="absolute top-4 left-4 bg-black text-white px-3 py-1 rounded z-50"
@@ -830,8 +828,9 @@ export default function VirtualWorld() {
       </button>
 
       <Canvas shadows camera={{ position: [0, 2, 10], fov: 60 }}>
+        <WebGLContextManager />
         {debug && <Perf position="top-left" />}
-        
+
         <ambientLight intensity={0.5} />
         <directionalLight
           position={[10, 20, 10]}
@@ -839,48 +838,49 @@ export default function VirtualWorld() {
           castShadow
           shadow-mapSize={[1024, 1024]}
         />
-        
+
         <Suspense fallback={null}>
           <Physics gravity={[0, -9.8, 0]} debug={debug}>
             <KeyboardControls 
               map={keyboardMap}
-              onChange={(name, pressed) => setMovement(prev => ({
-                ...prev,
-                [name.replace('ward', '')]: pressed
-              }))}
+              onChange={(name, pressed) => {
+                const controlName = name.replace('ward', '');
+                setControls(prev => ({ ...prev, [controlName]: pressed }));
+              }}
             >
-          <Ecctrl
-            characterInit={{
-              // Movement controls
-              forward: controls.forward,
-              backward: controls.backward,
-              left: controls.left,
-              right: controls.right,
-              
-              // Physics settings
-              maxVelLimit: 5,
-              jumpVel: 5,
-              turnSpeed: Math.PI / 2,
-              
-              // Camera settings
-              camInitDis: -5,
-              camMaxDis: -10,
-              camMinDis: -3,
-              camFollowMult: 12,
-              
-              // Animation mapping
-              animationSet: {
-                idle: "Idle",
-                walk: "Walk",
-                run: "Run",
-                jump: "Jump",
-                jumpIdle: "Jump",
-                jumpLand: "Jump"
-              }
-            }}
-          >
-            <AvatarModel url={modelUrl} />
-          </Ecctrl>
+              <Ecctrl
+                characterInit={{
+                  // Movement controls
+                  forward: controls.forward,
+                  backward: controls.backward,
+                  left: controls.left,
+                  right: controls.right,
+                  jump: controls.jump,
+
+                  // Physics settings
+                  maxVelLimit: 5,
+                  jumpVel: 5,
+                  turnSpeed: Math.PI / 2,
+
+                  // Camera settings
+                  camInitDis: -5,
+                  camMaxDis: -10,
+                  camMinDis: -3,
+                  camFollowMult: 12,
+
+                  // Animation mapping
+                  animationSet: {
+                    idle: "Idle",
+                    walk: "Walk",
+                    run: "Run",
+                    jump: "Jump",
+                    jumpIdle: "Jump",
+                    jumpLand: "Jump"
+                  }
+                }}
+              >
+                <AvatarModel url={modelUrl} />
+              </Ecctrl>
             </KeyboardControls>
 
             <DubaiCity />
@@ -888,12 +888,11 @@ export default function VirtualWorld() {
         </Suspense>
 
         <Environment preset="sunset" />
+        <Sky distance={450000} sunPosition={[0, 1, 0]} inclination={0} azimuth={0.25} />
       </Canvas>
-      <Loader />
     </div>
   );
 }
-
 
 
               {/* <Ecctrl
