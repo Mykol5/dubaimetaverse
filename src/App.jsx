@@ -81,9 +81,9 @@
 
 
 import { useState } from 'react';
+import { Canvas } from '@react-three/fiber';
 import AvatarSelection from './components/AvatarSelection';
 import VirtualWorld from './components/VirtualWorld';
-import WebGLContextManager from './components/WebGLContextManager';
 import { Loader } from '@react-three/drei';
 
 export default function App() {
@@ -103,12 +103,9 @@ export default function App() {
           }} 
         />
       ) : (
-        <>
-          <WebGLContextManager />
-          <VirtualWorld />
-          {loading && <Loader />}
-        </>
+        <VirtualWorld />
       )}
+      {loading && <Loader />}
     </>
   );
 }
